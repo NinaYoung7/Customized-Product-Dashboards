@@ -1,4 +1,4 @@
-# Dynamic Product Dashboards and automated reporting for a telecommunications company
+# Dynamic Product Dashboard and reporting - a telecommunications company 
 
 Submitted by: **NING YANG**
 
