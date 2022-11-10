@@ -84,7 +84,7 @@ There are `r unique.cus` respondents took the survey and it covered `r unique.pr
 click on the tabs to see different reports.
 
 
-Question 1
+Respondents
 ===================================
 
 
@@ -113,7 +113,7 @@ renderPlot({
 })
 ```
 
-Question 2
+Segmented Outcomes
 =====================================  
 
 
@@ -149,7 +149,7 @@ renderPlot({
 
 
 
-Question 3
+Brand Perceptions
 =====================================  
 
 Inputs {.sidebar}
@@ -179,7 +179,7 @@ q3_show_bp(bp.mean,input$q3_rank,bp.traits)
 
 
 
-Question 4
+Engagement
 =====================================  
 
 Inputs {.sidebar}
@@ -228,7 +228,7 @@ setorderv(x = gap, cols = "Mean", order = -1)
 })
 ```
 
-Question 5
+Models
 =====================================  
 
 Row {data-height=500}
