@@ -1,0 +1,227 @@
+---
+title: "Mobile Phones Marketing Survey- Static Report"
+author: "Ning Yang"
+date: "10/31/2022"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+library(data.table)
+library(DT)
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55), tidy = TRUE)
+```
+
+```{r source}
+source("constants.R")
+source("functions.R")
+
+```
+
+```{r read_data}
+dat <- fread(input = "../Data/mobile phone survey data.csv", verbose = F)
+  dat[, `Age Group` :=
+  fcase(
+  Age < 35 & Age >= 18 , '18-34',
+	Age < 50, '35-49',
+	Age< 65, '50-64',
+	Age >= 65, '65+'
+)]
+dat[, `Income Group`:=
+  fcase(
+    Income<50000,'[     0, 50000)',
+    Income<75000,'[ 50000, 75000)',
+    Income<100000,'[ 75000,100000)',
+    Income<150000,'[100000,150000)',
+    Income>=150000,'[150000,197000]'
+  )]
+```
+
+```{r define var}
+dat[, eval(satisfaction.name) := get(satisfaction.name) / value.max.satisfaction]
+unique.age.groups <- dat[, sort(unique(get(age.group.name)))]
+unique.genders <- dat[, sort(unique(get(gender.name)))]
+unique.income.groups <- dat[, sort(unique(get(income.group.name)))]
+unique.regions <- dat[, sort(unique(get(region.name)))]
+unique.personas <- dat[, sort(unique(get(persona.name)))]
+unique.products <- dat[, unique(get(product.name))]
+respondent.variables <- c(age.group.name, gender.name, income.group.name, region.name, persona.name)
+states.of.engagement <- c(awareness.name, consideration.name, consumption.name, satisfaction.name, advocacy.name)
+bp.traits <- names(dat)[grep(pattern = bp.pattern, x = names(dat))]
+dat.clean<- na.omit(dat,cols=bp.traits)
+cols<-c("BP_Boring_0_10","BP_Bulky_0_10","BP_Fragile_0_10","BP_Expensive_0_10")
+dat.clean[,(cols) :=  lapply(.SD, function(x) 10-x), .SDcols=cols]
+```
+
+
+# Report {.tabset}
+
+## Part 1:  Summary
+
+
+```{r part1}
+num_people<-unique(dat, by = id.name)[,.N]
+num_prod<-unique(dat, by = product.name)[,.N]
+num<-dat[,.N]
+datatable(dat[,.N,by = product.name])
+
+```
+
+A total of `r num_people` respondents participated in the marketing survey of `r num_prod` types of products of the telecommunications company client. There are a total of `r num` pieces of data, and it means each participant scored 20 products.
+
+
+The dataset contains demographic information variables including age, gender, income, region and persona for each subject.To better analyze the data, I divided the continuous variables age and income into classes. For example, age is categorized as 18-34, 35-49, 50-64, and 65 and older.
+
+
+The survey contains data on respondents' state of engagement including 5 variables:`r states.of.engagement`.These five variables are categorical variables, and belonging to this category is indicated by 1, otherwise it is indicated by 0. Only people who have awareness can have consideration, and then move to "Consumption","Satisfaction" and  "Advocacy" states.
+
+
+Also, the data set contains 12 brand perceptions variables which value between 0 and 10. 0 means that the subject believes that this variable is least consistent with the perception of the product, and 10 means that it is most consistent.It is worth noting that 8 variables such as "BP_Fast_0_10"  and "BP_User_Friendly_0_10" are positive ratings, with higher scores representing more positive, and 4 variables such as "BP_Expensive_0_10" are negative variables, with higher scores representing more negative.
+
+
+
+## Part 2:  Specific Questions {.tabset}
+
+
+### Q1: Respondent Variables {.tabset}
+
+In percentage terms, how were the survey’s respondents divided into categories for the following variables?
+
+#### Age Group
+
+```{r q1_age.group}
+show_respondent_pct(dat,respondent.variables[1])
+
+```
+
+
+
+
+#### Gender
+
+```{r q1_gender}
+show_respondent_pct(dat,respondent.variables[2])
+```
+
+#### Income Group
+
+```{r q1_income.group}
+show_respondent_pct(dat,respondent.variables[3])
+```
+
+#### Region
+ 
+```{r region}
+show_respondent_pct(dat,respondent.variables[4])
+```
+
+#### Persona
+
+```{r persona}
+show_respondent_pct(dat,respondent.variables[5])
+```
+
+
+### Q2:  Segmented Outcomes {.tabset}
+
+#### Part A
+
+What are the top 5 products by Awareness rates in the Northeast?
+
+```{r q2_a}
+q2a <- dat[get(region.name)==unique.regions[2], .(Mean = 100*mean(get(awareness.name), na.rm=TRUE)), by = product.name] 
+ show_Segmented_Outcomes(q2a,awareness.name,5) 
+```
+
+#### Part B
+
+What are the top 5 products by Advocacy rates among females who earn at least $100,000?
+
+```{r q2_b}
+q2b <- dat[get(gender.name)==unique.genders[1]&get(income.group.name) %in% unique.income.groups[4:5], .(Mean = 100*mean(get(advocacy.name), na.rm=TRUE)), by = product.name] 
+ show_Segmented_Outcomes(q2b,advocacy.name,5) 
+```
+
+
+
+### Q3:  Overall Brand Perceptions {.tabset}
+
+What are the top 5 brands by the overall average perception?
+
+
+```{r q3}
+q3_show_bp(dat.clean,5,bp.traits)  
+```
+
+
+### Q4: Gaps in Outcomes {.tabset}
+
+
+#### Part A
+
+Which 5 products have the largest gap between the rate of consumption and the rate of awareness?
+
+```{r q4_a}
+show_gap(dat,consumption.name,awareness.name)
+```
+
+#### Part B
+
+Which 5 products have the largest gap between the rate of Awareness and the average Satisfaction?
+
+```{r q4_b}
+show_gap(dat,awareness.name,satisfaction.name)
+```
+
+
+### Q5: Aggregated Engagement {.tabset}
+
+#### Part A
+
+How much impact does respondent's overall trends in awareness have for that person's awareness with Buzzdial phones?
+
+```{r q5_a}
+
+
+q5_model(dat,awareness.name,"Buzzdial",unique.age.groups,unique.genders,unique.income.groups,unique.regions,unique.personas,"logistic")
+
+```
+
+#### Part B
+
+How much impact does respondent's overall trends in satisfaction have for that person's satisfaction with Buzzdial phones?
+
+```{r q5_b}
+q5_model(dat,satisfaction.name,"Buzzdial",unique.age.groups,unique.genders,unique.income.groups,unique.regions,unique.personas,"linear")
+```
+
+
+
+## Part 3:  Reporting Engine {.tabset}
+
+This section of the work is available in the Dynamic Reporting Engine.rmd file.
+
+## Part 4:  Opportunities {.tabset}
+
+### Q1
+
+How would you build on the reporting capabilities that you have created?  What would you design next?
+
+I will create interactive dashboards and slides for presentation and automating reports and create the entire report as a web application.  I will also set up the ability to compare survey data of different time. For example, if the user enters January,versus June as the time, and selects the brand perception of a specific product as the indicators, they can immediately see a graph of month-over-month growth. When customers see trends in attitudes toward products, they can assign plans to sell popular products or find factors that affect the customer experience to improve products to increase sales.
+
+
+### Q2
+
+What are some opportunities to learn valuable information and inform strategic decisions?  List a number of questions that you might explore.
+
+The customer can also explore the evaluation of the product, for example by sending a survey to the customer via a questionnaire after purchasing the product again. This is because text mining, natural language processing, etc. can be a good way to analyze what customers think about the product's performance and make improvements.
+
+### Q3
+
+How would you approach other decision makers within the client's organization to assess their priorities and help them better utilize the available information?
+
+I would also communicate with other people in the organization  include executives, managers or analytics users who actually look at the data on a regular basis. I will conduct interviews and ask each person involved directly. Have the relevant decision makers answer questions such as who will be working with the automation project? Is it an analyst from the marketing team or the R&D team who working for improving the features of products?  I will also ask the pain points,for example, what did they always want to know but couldn’t find out?
+I would create dynamic dashboards with different directions based on their priorities and preferences to help them generate insights. For example, marketing team will focus on customers segmentation and R&D will focusing on improving products performance.
+
+
