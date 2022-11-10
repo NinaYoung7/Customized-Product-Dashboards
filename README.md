@@ -23,11 +23,17 @@ In addition to building these tools, I also identify opportunities for the clien
 ## Before you run the code
 
 Keep the files in a folder structure:
+
 ⦿ The Project's Folder:
+
    ○ Data
+   
    ○ Reports
+   
        • .rmd files
+       
        • .R files
+       
        
 The Rmarkdown file should be within the Reports subfolder.  It should read the data from the Data folder using relative directories:
 
